@@ -1,0 +1,7 @@
+./Tests
+images
+src/main.cpp
+*/*.exe
+*.exe
+.vscode/
+Tests
