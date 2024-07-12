@@ -1,5 +1,6 @@
-#ifndef PRIORITY_QUEUE_H
-#define PRIORITY_QUEUE_H
+#ifndef PRIORITY_QUEUE_HPP
+#define PRIORITY_QUEUE_HPP
+
 #include <vector>
 #include <math.h>
 #include <iostream>
@@ -106,7 +107,7 @@ namespace pop
         std::size_t m_last_index;
 
     public:
-        min_pq(std::size_t capacity) : m_capacity(capacity+1), m_last_index(0)
+        min_pq(std::size_t capacity) : m_capacity(capacity + 1), m_last_index(0)
         {
             heap.resize(m_capacity + 1); // +1 to make space for 1-based indexing
         }
