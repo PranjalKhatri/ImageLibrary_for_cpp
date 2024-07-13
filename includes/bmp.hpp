@@ -53,19 +53,12 @@ typedef struct tagRGBQUAD
 } RGBQUAD;
 #pragma pop(0) // enable padding
 
-#pragma pack(push, 1) // Disable padding
-typedef struct tagRGBTRIPLE
-{
-    BYTE rgbtBlue;
-    BYTE rgbtGreen;
-    BYTE rgbtRed;
-} RGBTRIPLE, *PRGBTRIPLE, *NPRGBTRIPLE, *LPRGBTRIPLE;
-#pragma pop(0) // enable padding
 
 #pragma end_region
 
+#pragma region bmp
 // TODO: Implement support for different bmp versions
-class bmp_reader
+class bmp
 {
 private:
     size_t m_file_size;
@@ -77,11 +70,11 @@ private:
     bool m_is_little_endian;
 #endif
     size_t m_width, m_height;
-    std::shared_ptr<std::vector<std::vector<RGBTRIPLE>>> pixel_data;
+    std::shared_ptr<std::vector<std::vector<RGBTRIPLE>>> m_pixel_data;
     char padding[4];
 
 public:
-    bmp_reader(std::string file_name) : m_file_name(file_name), pixel_data(std::make_shared<std::vector<std::vector<RGBTRIPLE>>>())
+    bmp(std::string file_name) : m_file_name(file_name), m_pixel_data(std::make_shared<std::vector<std::vector<RGBTRIPLE>>>())
     {
 #if __cplusplus >= 202002L
         if constexpr (std::endian::native == std::endian::little)
@@ -89,7 +82,10 @@ public:
         else
             m_is_little_endian = false;
 #endif
-        m_in_file.open(file_name, std::ios_base::binary);
+    }
+    void read_file()
+    {
+        m_in_file.open(m_file_name, std::ios_base::binary);
         if (!m_in_file.is_open())
         {
             std::cerr << "No such file exists";
@@ -105,8 +101,8 @@ public:
         }*/
         read_file_header();
         read_info_header();
-        (*pixel_data).resize(m_height);
-        for (auto &i : (*pixel_data))
+        (*m_pixel_data).resize(m_height);
+        for (auto &i : (*m_pixel_data))
         {
             i.resize(m_width);
         }
@@ -141,7 +137,7 @@ public:
         {
             for (int j = 0; j < m_width; ++j)
             {
-                if (!m_in_file.read(reinterpret_cast<char *>(&pixel_data->at(i)[j]), sizeof(RGBTRIPLE)))
+                if (!m_in_file.read(reinterpret_cast<char *>(&m_pixel_data->at(i)[j]), sizeof(RGBTRIPLE)))
                 {
                     std::cerr << "Error reading pixel data at row " << i << ", column " << j << "\n";
                     return;
@@ -192,7 +188,7 @@ public:
 
     std::shared_ptr<std::vector<std::vector<RGBTRIPLE>>> get_pixel_data()
     {
-        return pixel_data;
+        return m_pixel_data;
     }
     size_t getsize() const { return m_file_size; }
     bool check_bmp_header() const
@@ -202,5 +198,5 @@ public:
         return true;
     }
 };
-
+#pragma endregion
 #endif

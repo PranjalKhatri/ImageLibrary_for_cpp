@@ -18,6 +18,15 @@ typedef unsigned short WORD; // 2
 typedef unsigned long DWORD; // 4
 typedef long LONG;
 
+#pragma pack(push, 1) // Disable padding
+typedef struct tagRGBTRIPLE
+{
+    BYTE rgbtBlue;
+    BYTE rgbtGreen;
+    BYTE rgbtRed;
+} RGBTRIPLE, *PRGBTRIPLE, *NPRGBTRIPLE, *LPRGBTRIPLE;
+#pragma pop(0) // enable padding
+
 void displayCharBits(char c)
 {
     std::bitset<8> bits(c);
