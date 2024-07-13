@@ -5,3 +5,5 @@ src/main.cpp
 *.exe
 .vscode/
 Tests
+includes/ppm.h
+.gitignore
