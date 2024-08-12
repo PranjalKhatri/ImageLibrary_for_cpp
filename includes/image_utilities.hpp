@@ -3,8 +3,8 @@
 
 #include "utilities.hpp"
 #include "bmp.hpp"
-#include <math.h>
-#include <cmath>
+#include "math_utils.hpp"
+
 using rgb_data = std::vector<std::vector<RGBTRIPLE>>;
 
 void rgb_to_grayscale(std::shared_ptr<rgb_data> &_dat)
@@ -60,15 +60,26 @@ void rgb_to_sepia(std::shared_ptr<rgb_data> &_dat)
     }
 }
 
-void edge_detection(std::shared_ptr<rgb_data> &_dat)
+namespace edge_Kernels
+{
+    typedef struct
+    {
+        std::vector<std::vector<int>> _kernelx;
+        std::vector<std::vector<int>> _kernely;
+    } edge_kernel;
+    static edge_kernel ScharrKernel = {{{3, 0, -3}, {10, 0, -10}, {3, 0, -3}}, {{3, 10, 3}, {0, 0, 0}, {-3, -10, -3}}};
+    static edge_kernel SobelFredmanKernel = {{{1, 0, -1}, {2, 0, -2}, {1, 0, -1}}, {{1, 2, 1}, {0, 0, 0}, {-1, -2, -1}}};
+    static edge_kernel PrewittKernel = {{{1, 0, -1}, {1, 0, -1}, {1, 0, -1}}, {{1, 1, 1}, {0, 0, 0}, {-1, -1, -1}}};
+};
+void edge_detection(std::shared_ptr<rgb_data> &_dat, const edge_Kernels::edge_kernel &_kernel = edge_Kernels::SobelFredmanKernel)
 {
     size_t _height = _dat->size();
     size_t _width = _dat->at(0).size();
 
-    std::vector<std::vector<int>> _xmat = {{0, 0, 0}, {-2, 0, 2}, {-1, 0, 1}};
-    std::vector<std::vector<int>> _ymat = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+    // TODO: see the time between copying kernels and directly accessing them , for smaller images it is not a problem , might be a bit different at high res, or just leave it to user
+    std::vector<std::vector<int>> _xmat = _kernel._kernelx;
+    std::vector<std::vector<int>> _ymat = _kernel._kernely;
 
-    // Create a temporary vector to store the edge detection results
     rgb_data temp(_height, std::vector<RGBTRIPLE>(_width));
 
     for (int _row = 0; _row < _height; _row++)
@@ -125,20 +136,61 @@ void edge_detection(std::shared_ptr<rgb_data> &_dat)
 
 void invert_colours(std::shared_ptr<rgb_data> &_dat)
 {
-        size_t _height = _dat->size();
+    size_t _height = _dat->size();
     size_t _width = _dat->at(0).size();
 
     for (int _row = 0; _row < _height; _row++)
     {
         for (int _col = 0; _col < _width; _col++)
         {
-            (*_dat)[_row][_col].rgbtBlue = 255-(*_dat)[_row][_col].rgbtBlue;
-            (*_dat)[_row][_col].rgbtRed = 255-(*_dat)[_row][_col].rgbtRed;
-            (*_dat)[_row][_col].rgbtGreen = 255-(*_dat)[_row][_col].rgbtGreen;
+            (*_dat)[_row][_col].rgbtBlue = 255 - (*_dat)[_row][_col].rgbtBlue;
+            (*_dat)[_row][_col].rgbtRed = 255 - (*_dat)[_row][_col].rgbtRed;
+            (*_dat)[_row][_col].rgbtGreen = 255 - (*_dat)[_row][_col].rgbtGreen;
         }
-        
     }
-    
+}
+
+void gaussian_Blur(std::shared_ptr<rgb_data> &_dat, std::pair<size_t, smart_2d_ptr_int> _gaussian_mat)
+{
+    size_t _height = _dat->size();
+    size_t _width = _dat->at(0).size();
+
+    rgb_data temp(_height, std::vector<RGBTRIPLE>(_width));
+
+    int kernel_size = _gaussian_mat.second->size();
+    int half_size = kernel_size / 2;
+
+    for (int _row = 0; _row < _height; _row++)
+    {
+        for (int _col = 0; _col < _width; _col++)
+        {
+            int _gauss_r = 0, _gauss_g = 0, _gauss_b = 0;
+
+            for (int _r = -half_size; _r <= half_size; _r++)
+            {
+                for (int _c = -half_size; _c <= half_size; _c++)
+                {
+                    int _row_offset = _row + _r;
+                    int _col_offset = _col + _c;
+
+                    if (_row_offset >= 0 && _col_offset >= 0 && _row_offset < _height && _col_offset < _width)
+                    {
+                        int _gaussian_value = (*_gaussian_mat.second)[_r + half_size][_c + half_size];
+                        _gauss_r += _gaussian_value * (*_dat)[_row_offset][_col_offset].rgbtRed;
+                        _gauss_g += _gaussian_value * (*_dat)[_row_offset][_col_offset].rgbtGreen;
+                        _gauss_b += _gaussian_value * (*_dat)[_row_offset][_col_offset].rgbtBlue;
+                    }
+                }
+            }
+
+            temp[_row][_col].rgbtRed = static_cast<int>(_gauss_r / _gaussian_mat.first);
+            temp[_row][_col].rgbtGreen = static_cast<int>(_gauss_g / _gaussian_mat.first);
+            temp[_row][_col].rgbtBlue = static_cast<int>(_gauss_b / _gaussian_mat.first);
+        }
+    }
+
+    // Copy the results from the temporary vector to _dat
+    *_dat = temp;
 }
 
 #endif

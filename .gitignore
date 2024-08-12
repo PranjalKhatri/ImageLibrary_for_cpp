@@ -1,5 +1,6 @@
 ./Tests
 images
+src/
 src/main.cpp
 */*.exe
 *.exe
