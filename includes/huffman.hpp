@@ -2,7 +2,8 @@
 #define HUFFMAN_HPP
 
 #include "utilities.hpp"
-#include"priority_queue.hpp"
+#include "priority_queue.hpp"
+#include "chrono"
 
 class huffman_node
 {

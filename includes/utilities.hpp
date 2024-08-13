@@ -13,10 +13,10 @@
 #include <bitset>
 #include <map>
 
-typedef unsigned char BYTE;  // 1
-typedef unsigned short WORD; // 2
-typedef unsigned long DWORD; // 4
-typedef long LONG;
+typedef uint8_t BYTE;  // 1
+typedef uint16_t WORD; // 2
+typedef uint32_t DWORD; // 4
+typedef int32_t LONG;
 
 #pragma pack(push, 1) // Disable padding
 typedef struct tagRGBTRIPLE
